@@ -19,9 +19,13 @@ dependencies {
 }
 ```
 
+## How to obtain Genshin Wish API URL
+
+[Paimon.moe Document](https://paimon.moe/wish/import)
+
 ## How to obtain HoYoLab Cookie
 
-[Document](https://github.com/vermaysha/hoyolab-api/blob/master/README.md#how-to-obtain-hoyolab-cookie)
+[HoyoLab-API Document](https://github.com/vermaysha/hoyolab-api/blob/master/README.md#how-to-obtain-hoyolab-cookie)
 
 ## Special thanks to
 
