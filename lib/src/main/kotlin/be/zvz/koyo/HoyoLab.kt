@@ -1,7 +1,7 @@
 package be.zvz.koyo
 
 import be.zvz.koyo.constants.Routes
-import be.zvz.koyo.dto.Game
+import be.zvz.koyo.dto.GenshinGame
 import be.zvz.koyo.types.Games
 import be.zvz.koyo.types.Language
 import be.zvz.koyo.types.hoyolab.HoyoLabOptions
@@ -45,17 +45,17 @@ class HoyoLab @JvmOverloads constructor(
     )
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun gamesList(game: Games? = null): List<Game> = generateGameListCall(game).execute().use {
+    fun gamesList(game: Games? = null): List<GenshinGame> = generateGameListCall(game).execute().use {
         jsonParser.decodeFromStream(it.body.byteStream())
     }
 
-    fun gamesList(game: Games? = null, callback: (List<Game>) -> Unit, exceptionHandler: ((IOException) -> Unit)? = null) {
-        generateGameListCall(game).enqueue(AsyncHandler(jsonParser, ListSerializer(Game.serializer()), callback, exceptionHandler))
+    fun gamesList(game: Games? = null, callback: (List<GenshinGame>) -> Unit, exceptionHandler: ((IOException) -> Unit)? = null) {
+        generateGameListCall(game).enqueue(AsyncHandler(jsonParser, ListSerializer(GenshinGame.serializer()), callback, exceptionHandler))
     }
 
-    fun gameAccount(game: Games): Game = gamesList(game).maxBy { it.level }
+    fun gameAccount(game: Games): GenshinGame = gamesList(game).maxBy { it.level }
 
-    fun gameAccount(game: Games, callback: (Game) -> Unit, exceptionHandler: ((IOException) -> Unit)? = null) {
+    fun gameAccount(game: Games, callback: (GenshinGame) -> Unit, exceptionHandler: ((IOException) -> Unit)? = null) {
         gamesList(game, { callback(it.maxBy { element -> element.level }) }, exceptionHandler)
     }
 }

@@ -1,6 +1,5 @@
 package be.zvz.koyo.dto
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -35,7 +34,6 @@ data class GenshinCharacters(
         val activedConstellationNum: Int,
         val costumes: List<CharacterCostume>,
     ) : CharacterBase() {
-        @OptIn(ExperimentalSerializationApi::class)
         @Serializable
         data class CharacterWeapon(
             val id: Long,

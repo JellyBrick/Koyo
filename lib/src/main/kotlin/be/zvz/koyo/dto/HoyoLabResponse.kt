@@ -1,6 +1,9 @@
 package be.zvz.koyo.dto
 
-data class Response<T>(
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class HoyoLabResponse<T>(
     val retcode: Int,
     val message: String,
     val data: T,

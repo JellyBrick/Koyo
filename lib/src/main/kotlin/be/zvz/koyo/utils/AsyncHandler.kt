@@ -1,5 +1,6 @@
 package be.zvz.koyo.utils
 
+import be.zvz.koyo.dto.HoyoLabResponse
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
@@ -26,7 +27,7 @@ class AsyncHandler<T>(
     @OptIn(ExperimentalSerializationApi::class)
     override fun onResponse(call: Call, response: Response) {
         response.use {
-            callback(jsonParser.decodeFromStream(serializer, it.body.byteStream()))
+            callback(jsonParser.decodeFromStream(HoyoLabResponse.serializer(serializer), it.body.byteStream()).data)
         }
     }
 }

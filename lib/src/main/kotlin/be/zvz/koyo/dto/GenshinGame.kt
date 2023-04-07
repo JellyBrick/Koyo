@@ -3,7 +3,7 @@ package be.zvz.koyo.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Game(
+data class GenshinGame(
     val gameBiz: String,
     val region: String,
     val gameUid: Long,

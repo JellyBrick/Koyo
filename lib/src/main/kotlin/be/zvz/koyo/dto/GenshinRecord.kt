@@ -1,6 +1,5 @@
 package be.zvz.koyo.dto
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 @Serializable
