@@ -8,6 +8,8 @@ class HoyoLabCookie {
     val cookieToken: String?
     val accountId: Long
     val mi18nLang: Language?
+    var stuid: Long?
+    var loginTicket: String?
 
     @JvmOverloads
     constructor(
@@ -16,16 +18,20 @@ class HoyoLabCookie {
         cookieToken: String? = null,
         accountId: Long = -1,
         mi18nLang: Language? = null,
+        stuid: Long? = null,
+        loginTicket: String? = null,
     ) {
         this.ltoken = ltoken
         this.ltuid = ltuid
         this.cookieToken = cookieToken
         this.accountId = accountId
         this.mi18nLang = mi18nLang
+        this.stuid = stuid
+        this.loginTicket = loginTicket
     }
     constructor(cookie: String) {
         val cookieMap = cookie.split("; ").associate {
-            val (key, value) = it.split("=")
+            val (key, value) = it.split('=')
             key to value
         }
 
@@ -34,5 +40,7 @@ class HoyoLabCookie {
         cookieToken = cookieMap["cookie_token"]
         accountId = cookieMap["account_id"]?.toLongOrNull() ?: -1
         mi18nLang = cookieMap["mi18nLang"]?.let { Language from it }
+        stuid = cookieMap["stuid"]?.toLongOrNull()
+        loginTicket = cookieMap["login_ticket"]
     }
 }

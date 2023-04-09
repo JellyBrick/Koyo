@@ -12,9 +12,8 @@ object StringUtil {
         else -> throw IllegalArgumentException("Invalid UID")
     }
 
-    internal fun generateDS(): String {
-        val salt = "6s25p5ox5y14umn1p61aqyyvbvvl3lrt"
-        val date = Clock.System.now().epochSeconds
+    internal fun generateDS(salt: String = "6s25p5ox5y14umn1p61aqyyvbvvl3lrt"): String {
+        val date = Clock.System.now().epochSeconds / 1000
 
         val charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         val randomString = (1..6)
@@ -24,5 +23,12 @@ object StringUtil {
         val hash = "salt=$salt&t=$date&r=$randomString".encodeToByteArray().md5().hex
 
         return "$date,$randomString,$hash"
+    }
+
+    internal fun randomString(length: Int): String {
+        val charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+        return (1..length)
+            .map { charset.random() }
+            .joinToString("")
     }
 }

@@ -13,6 +13,7 @@ dependencies {
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.4.0")
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.5.0")
     implementation(group = "com.soywiz.korlibs.krypto", name = "krypto-jvm", version = "2.2.0")
+    implementation(group = "com.benasher44", name = "uuid", version = "0.7.0")
 }
 
 testing {

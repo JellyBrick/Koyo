@@ -1,14 +1,15 @@
 package be.zvz.koyo
 
 import be.zvz.koyo.constants.Routes
-import be.zvz.koyo.dto.GenshinGame
+import be.zvz.koyo.dto.HoyoLabGame
+import be.zvz.koyo.dto.HoyoLabGameList
+import be.zvz.koyo.dto.HoyoLabResponse
 import be.zvz.koyo.types.Games
 import be.zvz.koyo.types.Language
 import be.zvz.koyo.types.hoyolab.HoyoLabOptions
 import be.zvz.koyo.utils.AsyncHandler
 import be.zvz.koyo.utils.RequestUtil
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
 import kotlinx.serialization.json.decodeFromStream
@@ -16,18 +17,19 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okio.IOException
 
-class HoyoLab @JvmOverloads constructor(
-    private val options: HoyoLabOptions,
-    private val okHttpClient: OkHttpClient = OkHttpClient(),
+open class HoyoLab @JvmOverloads constructor(
+    protected val options: HoyoLabOptions,
+    protected val okHttpClient: OkHttpClient = OkHttpClient(),
 ) {
     @OptIn(ExperimentalSerializationApi::class)
-    private val jsonParser = Json {
+    protected val jsonParser = Json {
         ignoreUnknownKeys = true
         namingStrategy = JsonNamingStrategy.SnakeCase
+        isLenient = true
     }
 
     private fun generateGameListCall(game: Games?) = okHttpClient.newCall(
-        RequestUtil.getDefaultRequestBuilder(options.cookie)
+        RequestUtil.getDefaultWebRequestBuilder(options.cookie)
             .url(
                 Routes.GAMES_ACCOUNT.toHttpUrl()
                     .newBuilder()
@@ -45,17 +47,17 @@ class HoyoLab @JvmOverloads constructor(
     )
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun gamesList(game: Games? = null): List<GenshinGame> = generateGameListCall(game).execute().use {
-        jsonParser.decodeFromStream(it.body.byteStream())
+    fun gamesList(game: Games? = null): HoyoLabGameList = generateGameListCall(game).execute().use {
+        jsonParser.decodeFromStream<HoyoLabResponse<HoyoLabGameList>>(it.body.byteStream()).data
     }
 
-    fun gamesList(game: Games? = null, callback: (List<GenshinGame>) -> Unit, exceptionHandler: ((IOException) -> Unit)? = null) {
-        generateGameListCall(game).enqueue(AsyncHandler(jsonParser, ListSerializer(GenshinGame.serializer()), callback, exceptionHandler))
+    fun gamesList(game: Games? = null, callback: (HoyoLabGameList) -> Unit, exceptionHandler: ((IOException) -> Unit)? = null) {
+        generateGameListCall(game).enqueue(AsyncHandler(jsonParser, HoyoLabGameList.serializer(), callback, exceptionHandler))
     }
 
-    fun gameAccount(game: Games): GenshinGame = gamesList(game).maxBy { it.level }
+    fun gameAccount(game: Games): HoyoLabGame = gamesList(game).list.maxBy { it.level }
 
-    fun gameAccount(game: Games, callback: (GenshinGame) -> Unit, exceptionHandler: ((IOException) -> Unit)? = null) {
-        gamesList(game, { callback(it.maxBy { element -> element.level }) }, exceptionHandler)
+    fun gameAccount(game: Games, callback: (HoyoLabGame) -> Unit, exceptionHandler: ((IOException) -> Unit)? = null) {
+        gamesList(game, { callback(it.list.maxBy { element -> element.level }) }, exceptionHandler)
     }
 }
