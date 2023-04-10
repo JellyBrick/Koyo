@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "1.8.20"
     kotlin("plugin.serialization") version "1.5.0"
     `java-library`
+    `maven-publish`
 }
 
 repositories {
@@ -22,6 +23,20 @@ testing {
         val test by getting(JvmTestSuite::class) {
             // Use Kotlin Test, test framework
             useKotlinTest("1.8.10")
+        }
+    }
+}
+
+val sourcesJar by tasks.registering(Jar::class) {
+    from(sourceSets["main"].allSource)
+    archiveClassifier.set("sources")
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("Koyo") {
+            from(components["java"])
+            artifact(sourcesJar)
         }
     }
 }
