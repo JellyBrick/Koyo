@@ -2,7 +2,26 @@ package be.zvz.koyo
 
 import be.zvz.koyo.constants.Headers
 import be.zvz.koyo.constants.Routes
-import be.zvz.koyo.dto.*
+import be.zvz.koyo.dto.GenshinCharacterIdsAndServerAndRoleId
+import be.zvz.koyo.dto.GenshinCharacters
+import be.zvz.koyo.dto.GenshinDailyClaim
+import be.zvz.koyo.dto.GenshinDailyClaimRequest
+import be.zvz.koyo.dto.GenshinDailyInfo
+import be.zvz.koyo.dto.GenshinDailyNote
+import be.zvz.koyo.dto.GenshinDailyRewards
+import be.zvz.koyo.dto.GenshinDiaryDetail
+import be.zvz.koyo.dto.GenshinDiaryInfo
+import be.zvz.koyo.dto.GenshinRecord
+import be.zvz.koyo.dto.GenshinServerAndRoleId
+import be.zvz.koyo.dto.GenshinWishLog
+import be.zvz.koyo.dto.HoyoLabAuthKey
+import be.zvz.koyo.dto.HoyoLabAuthKeyRequest
+import be.zvz.koyo.dto.HoyoLabLoginByCookie
+import be.zvz.koyo.dto.HoyoLabMultiTokenByLoginTicket
+import be.zvz.koyo.dto.HoyoLabResponse
+import be.zvz.koyo.dto.HoyoLabWebResponse
+import be.zvz.koyo.dto.ParsedGenshinDailyClaim
+import be.zvz.koyo.dto.ParsedGenshinDailyReward
 import be.zvz.koyo.exception.HoyoLabException
 import be.zvz.koyo.types.GachaType
 import be.zvz.koyo.types.Games
@@ -23,11 +42,14 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.decodeFromStream
-import okhttp3.*
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.internal.commonEmptyRequestBody
+import okhttp3.Response
 import okio.IOException
 
 class GenshinImpact @JvmOverloads constructor(
@@ -312,15 +334,20 @@ class GenshinImpact @JvmOverloads constructor(
             .url(
                 Routes.GENSHIN_DAILY_CLAIM.toHttpUrl()
                     .newBuilder()
-                    .addQueryParameter("act_id", "e202102251931481")
                     .addQueryParameter("lang", language.id)
                     .build(),
             )
-            .post(commonEmptyRequestBody)
+            .post(
+                jsonParser.encodeToString(
+                    GenshinDailyClaimRequest(
+                        "e202102251931481",
+                    ),
+                ).toRequestBody("application/json".toMediaType()),
+            )
             .build(),
     )
 
-    fun dailyReward(rewards: GenshinDailyRewards, timestamp: Long = -1): GenshinDailyReward {
+    fun parseDailyRewardFromRewards(rewards: GenshinDailyRewards, timestamp: Long = -1): ParsedGenshinDailyReward {
         val localDateTime = if (timestamp == -1L) {
             Instant.fromEpochSeconds(rewards.now)
         } else {
@@ -328,7 +355,7 @@ class GenshinImpact @JvmOverloads constructor(
         }.toLocalDateTime(TimeZone.of("Asia/Shanghai"))
 
         val day = localDateTime.dayOfMonth
-        return GenshinDailyReward(
+        return ParsedGenshinDailyReward(
             month = rewards.month,
             now = rewards.now,
             resign = rewards.resign,
@@ -337,16 +364,33 @@ class GenshinImpact @JvmOverloads constructor(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun dailyClaim(): GenshinDailyClaimWrapper {
-        val response = generateDailyClaim().execute().body.byteStream().use {
-            jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyClaim>>(it)
-        }
+    fun dailyClaim(): HoyoLabResponse<GenshinDailyClaim> = generateDailyClaim().execute().body.byteStream().use {
+        jsonParser.decodeFromStream(it)
+    }
 
-        val info = dailyInfo()
-        val reward = dailyReward(dailyRewards())
+    @OptIn(ExperimentalSerializationApi::class)
+    fun dailyClaim(
+        callback: (HoyoLabResponse<GenshinDailyClaim>) -> Unit,
+        exceptionHandler: ((IOException) -> Unit)? = null,
+    ) = generateDailyClaim().enqueue(
+        object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                exceptionHandler?.invoke(e)
+            }
 
+            override fun onResponse(call: Call, response: Response) {
+                callback(jsonParser.decodeFromStream(response.body.byteStream()))
+            }
+        },
+    )
+
+    fun parseDailyClaim(
+        response: HoyoLabResponse<GenshinDailyClaim>,
+        info: GenshinDailyInfo,
+        reward: ParsedGenshinDailyReward,
+    ): ParsedGenshinDailyClaim {
         if (response.retcode == -5003) {
-            return GenshinDailyClaimWrapper(
+            return ParsedGenshinDailyClaim(
                 status = response.message,
                 code = -5003,
                 reward = reward,
@@ -357,7 +401,7 @@ class GenshinImpact @JvmOverloads constructor(
         val dailyClaim: GenshinDailyClaim = response.data
 
         if (dailyClaim.code.lowercase() == "ok" && response.retcode == 0) {
-            return GenshinDailyClaimWrapper(
+            return ParsedGenshinDailyClaim(
                 status = response.message,
                 code = 0,
                 reward = reward,
@@ -365,7 +409,7 @@ class GenshinImpact @JvmOverloads constructor(
             )
         }
 
-        return GenshinDailyClaimWrapper(
+        return ParsedGenshinDailyClaim(
             status = response.message,
             code = response.retcode,
             reward = null,
@@ -418,15 +462,16 @@ class GenshinImpact @JvmOverloads constructor(
         },
     )
 
+    /**
+     * FIXME: NOT WORKING
+     *
+     * Currently, oversea account (HoyoLab Account) is not support generate gacha Authkey from HoyoLab sToken.
+     * check this issue, https://github.com/DGP-Studio/Snap.Hutao/issues/638
+     * I don't think it's technically impossible (check the below code), but I haven't verified that ctrlcvs's method works.
+     * https://github.com/ctrlcvs/xiaoyao-cvs-plugin/blob/master/model/mys/mihoyoApi.js
+     */
     @OptIn(ExperimentalSerializationApi::class)
     fun authKey(): HoyoLabAuthKey {
-        TODO(
-            "Currently, oversea account (HoyoLab Account) is not support generate gacha Authkey from HoyoLab sToken. " +
-            "Check this issue https://github.com/DGP-Studio/Snap.Hutao/issues/638 " +
-            "I don't think it's technically impossible, but I haven't verified that it works. " +
-            "https://github.com/ctrlcvs/xiaoyao-cvs-plugin/blob/master/model/mys/mihoyoApi.js"
-        )
-
         val loginByCookieResult = okHttpClient.newCall(
             Request.Builder()
                 .addHeader("User-Agent", Headers.Web.USER_AGENT)
@@ -502,7 +547,7 @@ class GenshinImpact @JvmOverloads constructor(
         gachaType: GachaType,
         language: Language,
         page: Long,
-        endId: Long
+        endId: Long,
     ) =
         okHttpClient.newCall(
             RequestUtil.getDefaultWebRequestBuilder(cookie)
@@ -520,9 +565,9 @@ class GenshinImpact @JvmOverloads constructor(
                         .addQueryParameter("region", userRegion.id)
                         .addQueryParameter("page", page.toString())
                         .addQueryParameter("end_id", endId.toString())
-                        .build()
+                        .build(),
                 )
-                .build()
+                .build(),
         )
 
     @JvmOverloads
@@ -532,7 +577,7 @@ class GenshinImpact @JvmOverloads constructor(
         gachaType: GachaType,
         language: Language,
         page: Long,
-        endId: Long = 0
+        endId: Long = 0,
     ): GenshinWishLog =
         generateWishLogCall(authKey, gachaType, language, page, endId).execute().use {
             jsonParser.decodeFromStream<HoyoLabResponse<GenshinWishLog>>(it.body.byteStream()).data
@@ -548,8 +593,8 @@ class GenshinImpact @JvmOverloads constructor(
         callback: (GenshinWishLog) -> Unit,
         exceptionHandler: ((IOException) -> Unit)? = null,
     ) = generateWishLogCall(authKey, gachaType, language, page, endId).enqueue(
-            AsyncHandler(jsonParser, GenshinWishLog.serializer(), callback, exceptionHandler)
-        )
+        AsyncHandler(jsonParser, GenshinWishLog.serializer(), callback, exceptionHandler),
+    )
 
     fun getWishLogList(authKey: HoyoLabAuthKey, gachaType: GachaType, language: Language): List<GenshinWishLog> =
         mutableListOf<GenshinWishLog>().apply {

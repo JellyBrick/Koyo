@@ -3,9 +3,9 @@ package be.zvz.koyo.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GenshinDailyClaimWrapper(
+data class ParsedGenshinDailyClaim(
     val status: String,
     val code: Int,
-    val reward: GenshinDailyReward?,
+    val reward: ParsedGenshinDailyReward?,
     val info: GenshinDailyInfo,
 )

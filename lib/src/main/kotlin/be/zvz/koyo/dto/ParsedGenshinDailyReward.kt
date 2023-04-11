@@ -3,7 +3,7 @@ package be.zvz.koyo.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GenshinDailyReward(
+data class ParsedGenshinDailyReward(
     val month: Int,
     val now: Long,
     val resign: Boolean,
