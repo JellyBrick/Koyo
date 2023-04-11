@@ -41,6 +41,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNamingStrategy
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.Call
 import okhttp3.Callback
@@ -52,10 +54,16 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okio.IOException
 
+@OptIn(ExperimentalSerializationApi::class)
 class GenshinImpact @JvmOverloads constructor(
     options: GenshinOptions,
     okHttpClient: OkHttpClient = OkHttpClient(),
-) : HoyoLab(options, okHttpClient) {
+    jsonParser: Json = Json {
+        ignoreUnknownKeys = true
+        namingStrategy = JsonNamingStrategy.SnakeCase
+        isLenient = true
+    },
+) : HoyoLab(options, okHttpClient, jsonParser) {
     private val cookie = options.cookie
     private val uid: Long = requireNotNull(options.uid) { "UID is required" }
     private val language = options.language ?: Language.ENGLISH
@@ -76,7 +84,6 @@ class GenshinImpact @JvmOverloads constructor(
             .build(),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun record(): GenshinRecord = generateRecordCall().execute().use {
         jsonParser.decodeFromStream<HoyoLabResponse<GenshinRecord>>(it.body.byteStream())
     }.data
@@ -101,7 +108,6 @@ class GenshinImpact @JvmOverloads constructor(
             .build(),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun characters(): GenshinCharacters = generateCharactersCall().execute().use {
         jsonParser.decodeFromStream<HoyoLabResponse<GenshinCharacters>>(it.body.byteStream())
     }.data
@@ -128,7 +134,6 @@ class GenshinImpact @JvmOverloads constructor(
             .build(),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun charactersSummary(
         characterIds: List<Long>,
     ): GenshinCharacters.CharacterSummary = generateCharactersSummary(characterIds).execute().use {
@@ -159,7 +164,6 @@ class GenshinImpact @JvmOverloads constructor(
             .build(),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun spiralAbyss(
         scheduleType: GenshinAbyssSchedule = GenshinAbyssSchedule.CURRENT,
     ): GenshinSpiralAbyss = generateSpiralAbyssCall(scheduleType).execute().use {
@@ -187,7 +191,6 @@ class GenshinImpact @JvmOverloads constructor(
             .build(),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun dailyNote(): GenshinDailyNote = generateDailyNoteCall().execute().use {
         jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyNote>>(it.body.byteStream())
     }.data
@@ -213,7 +216,6 @@ class GenshinImpact @JvmOverloads constructor(
             .build(),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun diaries(
         month: GenshinDiaryMonth = GenshinDiaryMonth.CURRENT,
     ): GenshinDiaryInfo = generateDiariesCall(month).execute().use {
@@ -228,7 +230,6 @@ class GenshinImpact @JvmOverloads constructor(
         AsyncHandler(jsonParser, GenshinDiaryInfo.serializer(), callback, exceptionHandler),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun diaryDetail(
         type: GenshinDiaryType,
         month: GenshinDiaryMonth,
@@ -292,7 +293,6 @@ class GenshinImpact @JvmOverloads constructor(
             .build(),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun dailyInfo(): GenshinDailyInfo = generateDailyInfo().execute().use {
         jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyInfo>>(it.body.byteStream())
     }.data
@@ -317,7 +317,6 @@ class GenshinImpact @JvmOverloads constructor(
             .build(),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun dailyRewards(): GenshinDailyRewards = generateDailyRewards().execute().use {
         jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyRewards>>(it.body.byteStream())
     }.data
@@ -363,12 +362,10 @@ class GenshinImpact @JvmOverloads constructor(
         )
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun dailyClaim(): HoyoLabResponse<GenshinDailyClaim> = generateDailyClaim().execute().body.byteStream().use {
         jsonParser.decodeFromStream(it)
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun dailyClaim(
         callback: (HoyoLabResponse<GenshinDailyClaim>) -> Unit,
         exceptionHandler: ((IOException) -> Unit)? = null,
@@ -434,7 +431,6 @@ class GenshinImpact @JvmOverloads constructor(
             .build(),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun redeemCode(redeemCode: String): HoyoLabResponse<String?> = generateRedeemCodeCall(redeemCode).execute().use {
         jsonParser.decodeFromStream(it.body.byteStream())
     }
@@ -453,7 +449,6 @@ class GenshinImpact @JvmOverloads constructor(
                 }
             }
 
-            @OptIn(ExperimentalSerializationApi::class)
             override fun onResponse(call: Call, response: Response) {
                 response.use {
                     callback(jsonParser.decodeFromStream(it.body.byteStream()))
@@ -470,7 +465,7 @@ class GenshinImpact @JvmOverloads constructor(
      * I don't think it's technically impossible (check the below code), but I haven't verified that ctrlcvs's method works.
      * https://github.com/ctrlcvs/xiaoyao-cvs-plugin/blob/master/model/mys/mihoyoApi.js
      */
-    @OptIn(ExperimentalSerializationApi::class)
+
     fun authKey(): HoyoLabAuthKey {
         val loginByCookieResult = okHttpClient.newCall(
             Request.Builder()
@@ -571,7 +566,6 @@ class GenshinImpact @JvmOverloads constructor(
         )
 
     @JvmOverloads
-    @OptIn(ExperimentalSerializationApi::class)
     fun getWishLog(
         authKey: HoyoLabAuthKey,
         gachaType: GachaType,

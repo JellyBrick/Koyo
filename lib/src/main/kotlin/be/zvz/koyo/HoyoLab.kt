@@ -17,16 +17,16 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okio.IOException
 
+@OptIn(ExperimentalSerializationApi::class)
 open class HoyoLab @JvmOverloads constructor(
     protected val options: HoyoLabOptions,
     protected val okHttpClient: OkHttpClient = OkHttpClient(),
-) {
-    @OptIn(ExperimentalSerializationApi::class)
-    protected val jsonParser = Json {
+    protected val jsonParser: Json = Json {
         ignoreUnknownKeys = true
         namingStrategy = JsonNamingStrategy.SnakeCase
         isLenient = true
-    }
+    },
+) {
 
     private fun generateGameListCall(game: Games?) = okHttpClient.newCall(
         RequestUtil.getDefaultWebRequestBuilder(options.cookie)
@@ -46,7 +46,6 @@ open class HoyoLab @JvmOverloads constructor(
             .build(),
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun gamesList(game: Games? = null): HoyoLabGameList = generateGameListCall(game).execute().use {
         jsonParser.decodeFromStream<HoyoLabResponse<HoyoLabGameList>>(it.body.byteStream()).data
     }
