@@ -68,7 +68,7 @@ class GenshinImpact @JvmOverloads constructor(
 ) : HoyoLab(options, okHttpClient, jsonParser) {
     private val cookie = options.cookie
     private val uid: Long = requireNotNull(options.uid) { "UID is required" }
-    private val language = options.language ?: Language.ENGLISH
+    private val language = options.language ?: options.cookie.mi18nLang ?: Language.ENGLISH
 
     val userRegion: GenshinRegion = GenshinRegion.from(StringUtil.genshinUidToRegion(options.uid.toString()))
 
