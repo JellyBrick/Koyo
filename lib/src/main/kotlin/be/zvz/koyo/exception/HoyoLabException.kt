@@ -1,8 +1,12 @@
 package be.zvz.koyo.exception
 
 class HoyoLabException : RuntimeException {
+    var data: Any? = null
+        private set
     constructor() : super()
-    constructor(message: String) : super(message)
+    constructor(message: String, data: Any) : super(message) {
+        this.data = data
+    }
     constructor(message: String, cause: Throwable) : super(message, cause)
     constructor(cause: Throwable) : super(cause)
     constructor(

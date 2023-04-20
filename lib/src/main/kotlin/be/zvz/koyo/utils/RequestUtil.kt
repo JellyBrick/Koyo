@@ -9,7 +9,7 @@ object RequestUtil {
         .addHeader("User-Agent", Headers.Web.USER_AGENT)
         .addHeader("x-rpc-app_version", Headers.Web.X_RPC_APP_VERSION)
         .addHeader("x-rpc-client_type", Headers.Web.X_RPC_CLIENT_TYPE)
-        .addHeader("x-rpc-language", Headers.Web.X_RPC_LANGUAGE)
+        .addHeader("x-rpc-language", cookie.mi18nLang?.id ?: Headers.Web.X_RPC_LANGUAGE)
         .addHeader("Cookie", generateCookieFromCookieObject(cookie))
 
     fun getDefaultAndroidRequestBuilder(): Request.Builder = Request.Builder()

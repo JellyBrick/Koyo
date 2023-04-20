@@ -13,9 +13,9 @@ object StringUtil {
     }
 
     internal fun generateDS(salt: String = "6s25p5ox5y14umn1p61aqyyvbvvl3lrt"): String {
-        val date = Clock.System.now().epochSeconds / 1000
+        val date = Clock.System.now().epochSeconds
 
-        val charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        val charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         val randomString = (1..6)
             .map { charset.random() }
             .joinToString("")

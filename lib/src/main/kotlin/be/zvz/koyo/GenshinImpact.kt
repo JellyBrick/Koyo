@@ -160,6 +160,7 @@ class GenshinImpact @JvmOverloads constructor(
                     .addQueryParameter("schedule_type", scheduleType.id.toString())
                     .build(),
             )
+            .header("DS", StringUtil.generateDS())
             .get()
             .build(),
     )
@@ -348,9 +349,9 @@ class GenshinImpact @JvmOverloads constructor(
 
     fun parseDailyRewardFromRewards(rewards: GenshinDailyRewards, timestamp: Long = -1): ParsedGenshinDailyReward {
         val localDateTime = if (timestamp == -1L) {
-            Instant.fromEpochSeconds(rewards.now)
+            Instant.fromEpochMilliseconds(rewards.now)
         } else {
-            Instant.fromEpochSeconds(timestamp)
+            Instant.fromEpochMilliseconds(timestamp)
         }.toLocalDateTime(TimeZone.of("Asia/Shanghai"))
 
         val day = localDateTime.dayOfMonth
@@ -474,7 +475,7 @@ class GenshinImpact @JvmOverloads constructor(
                 .url(
                     Routes.LOGIN_BY_COOKIE.toHttpUrl()
                         .newBuilder()
-                        .addQueryParameter("t", Clock.System.now().epochSeconds.toString())
+                        .addQueryParameter("t", Clock.System.now().toEpochMilliseconds().toString())
                         .build(),
                 )
                 .get()
@@ -484,7 +485,7 @@ class GenshinImpact @JvmOverloads constructor(
         }
 
         val accountInfo =
-            loginByCookieResult.accountInfo ?: throw HoyoLabException("Invalid data received ($loginByCookieResult)")
+            loginByCookieResult.accountInfo ?: throw HoyoLabException("Invalid data received ($loginByCookieResult)", loginByCookieResult)
 
         val loginToken = okHttpClient.newCall(
             Request.Builder()
@@ -530,11 +531,13 @@ class GenshinImpact @JvmOverloads constructor(
             jsonParser.decodeFromStream<HoyoLabResponse<HoyoLabAuthKey?>>(response.body.byteStream())
         }
 
+        println(genshinAuthKeyResponse)
+
         return if (genshinAuthKeyResponse.message == "OK") {
             genshinAuthKeyResponse.data
         } else {
             null
-        } ?: throw HoyoLabException("Invalid data received ($genshinAuthKeyResponse)")
+        } ?: throw HoyoLabException("Invalid data received ($genshinAuthKeyResponse)", genshinAuthKeyResponse)
     }
 
     private fun generateWishLogCall(

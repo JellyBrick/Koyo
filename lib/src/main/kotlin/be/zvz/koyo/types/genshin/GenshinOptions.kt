@@ -6,7 +6,7 @@ import be.zvz.koyo.types.hoyolab.HoyoLabOptions
 class GenshinOptions @JvmOverloads constructor(
     cookie: HoyoLabCookie,
     val uid: Long? = null,
-) : HoyoLabOptions(cookie) {
+) : HoyoLabOptions(cookie, language = cookie.mi18nLang) {
     @JvmOverloads
     constructor(cookie: String, uid: Long? = null) : this(HoyoLabCookie(cookie), uid)
 

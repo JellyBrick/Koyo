@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GenshinRole(
     @SerialName("AvatarUrl")
-    val avatarUrl: String,
+    val avatarUrl: String = "",
     val nickname: String,
     val region: String,
     val level: Long,

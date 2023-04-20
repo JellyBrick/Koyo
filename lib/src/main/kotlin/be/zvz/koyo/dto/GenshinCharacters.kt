@@ -30,7 +30,7 @@ data class GenshinCharacters(
         val level: Int,
         val weapon: CharacterWeapon,
         val reliquaries: List<CharacterReliquaries>,
-        val constellation: List<CharacterConstellation>,
+        val constellations: List<CharacterConstellation>,
         val activedConstellationNum: Int,
         val costumes: List<CharacterCostume>,
     ) : CharacterBase() {
