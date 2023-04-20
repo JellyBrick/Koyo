@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class GenshinDailyNote(
     val currentResin: Int,
     val maxResin: Int,
-    val resinRecoveryTime: String,
+    val resinRecoveryTime: Int, // String, but it always a numeric type
     val finishedTaskNum: Int,
     val totalTaskNum: Int,
     val isExtraTaskRewardReceived: Boolean,
@@ -49,13 +49,13 @@ data class GenshinDailyNote(
         @Serializable
         data class RecoveryTime(
             @SerialName("Day")
-            val day: Int,
+            val day: Int = 0,
             @SerialName("Hour")
-            val hour: Int,
+            val hour: Int = 0,
             @SerialName("Minute")
-            val minute: Int,
+            val minute: Int = 0,
             @SerialName("Second")
-            val second: Int,
+            val second: Int = 0,
             val reached: Boolean,
         )
     }

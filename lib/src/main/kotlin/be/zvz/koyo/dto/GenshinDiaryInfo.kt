@@ -19,7 +19,7 @@ data class GenshinDiaryInfo(
         val currentMora: Int,
         val lastPrimogems: Int,
         val lastMora: Int,
-        val primogemsRate: Int,
+        val primogemRate: Int,
         val moraRate: Int,
         val groupBy: List<GroupBy>,
     ) {

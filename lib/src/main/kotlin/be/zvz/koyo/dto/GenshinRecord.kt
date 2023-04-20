@@ -29,7 +29,7 @@ data class GenshinRecord(
     @Serializable
     data class Stats(
         val activeDayNumber: Int,
-        val achivementNumber: Int,
+        val achievementNumber: Int,
         val anemoculusNumber: Int,
         val geoculusNumber: Int,
         val electroculusNumber: Int,
@@ -37,7 +37,7 @@ data class GenshinRecord(
         val avatarNumber: Int,
         val wayPointNumber: Int,
         val domainNumber: Int,
-        val spiralAbyss: Int,
+        val spiralAbyss: String,
         val preciousChestNumber: Int,
         val luxuriousChestNumber: Int,
         val exquisiteChestNumber: Int,

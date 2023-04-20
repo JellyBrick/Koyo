@@ -2,6 +2,7 @@ package be.zvz.koyo
 
 import be.zvz.koyo.constants.Headers
 import be.zvz.koyo.constants.Routes
+import be.zvz.koyo.dto.CodeRedemptionResult
 import be.zvz.koyo.dto.GenshinCharacterIdsAndServerAndRoleId
 import be.zvz.koyo.dto.GenshinCharacters
 import be.zvz.koyo.dto.GenshinDailyClaim
@@ -131,6 +132,7 @@ class GenshinImpact @JvmOverloads constructor(
                     ),
                 ).toRequestBody("application/json".toMediaType()),
             )
+            .header("DS", StringUtil.generateDS())
             .build(),
     )
 
@@ -188,6 +190,7 @@ class GenshinImpact @JvmOverloads constructor(
                     .addQueryParameter("role_id", uid.toString())
                     .build(),
             )
+            .header("DS", StringUtil.generateDS())
             .get()
             .build(),
     )
@@ -208,8 +211,8 @@ class GenshinImpact @JvmOverloads constructor(
             .url(
                 Routes.GENSHIN_DIARY.toHttpUrl()
                     .newBuilder()
-                    .addQueryParameter("server", userRegion.id)
-                    .addQueryParameter("role_id", uid.toString())
+                    .addQueryParameter("region", userRegion.id)
+                    .addQueryParameter("uid", uid.toString())
                     .addQueryParameter("month", month.id.toString())
                     .build(),
             )
@@ -246,11 +249,12 @@ class GenshinImpact @JvmOverloads constructor(
                     .url(
                         Routes.GENSHIN_DIARY_DETAIL.toHttpUrl()
                             .newBuilder()
-                            .addQueryParameter("server", userRegion.id)
-                            .addQueryParameter("role_id", uid.toString())
+                            .addQueryParameter("region", userRegion.id)
+                            .addQueryParameter("uid", uid.toString())
                             .addQueryParameter("type", type.id.toString())
                             .addQueryParameter("month", month.id.toString())
-                            .addQueryParameter("page", page.toString())
+                            .addQueryParameter("current_page", page.toString())
+                            .addQueryParameter("page_size", "100")
                             .build(),
                     )
                     .get()
@@ -363,12 +367,12 @@ class GenshinImpact @JvmOverloads constructor(
         )
     }
 
-    fun dailyClaim(): HoyoLabResponse<GenshinDailyClaim> = generateDailyClaim().execute().body.byteStream().use {
-        jsonParser.decodeFromStream(it)
+    fun dailyClaim(): HoyoLabResponse<GenshinDailyClaim?> = generateDailyClaim().execute().use {
+        jsonParser.decodeFromStream(it.body.byteStream())
     }
 
     fun dailyClaim(
-        callback: (HoyoLabResponse<GenshinDailyClaim>) -> Unit,
+        callback: (HoyoLabResponse<GenshinDailyClaim?>) -> Unit,
         exceptionHandler: ((IOException) -> Unit)? = null,
     ) = generateDailyClaim().enqueue(
         object : Callback {
@@ -377,7 +381,9 @@ class GenshinImpact @JvmOverloads constructor(
             }
 
             override fun onResponse(call: Call, response: Response) {
-                callback(jsonParser.decodeFromStream(response.body.byteStream()))
+                response.body.byteStream().use {
+                    callback(jsonParser.decodeFromStream(it))
+                }
             }
         },
     )
@@ -432,7 +438,7 @@ class GenshinImpact @JvmOverloads constructor(
             .build(),
     )
 
-    fun redeemCode(redeemCode: String): HoyoLabResponse<String?> = generateRedeemCodeCall(redeemCode).execute().use {
+    fun redeemCode(redeemCode: String): HoyoLabResponse<CodeRedemptionResult?> = generateRedeemCodeCall(redeemCode).execute().use {
         jsonParser.decodeFromStream(it.body.byteStream())
     }
 
@@ -557,6 +563,7 @@ class GenshinImpact @JvmOverloads constructor(
                         .addQueryParameter("sign_type", "2")
                         .addQueryParameter("auth_appid", "webview_gacha")
                         .addQueryParameter("init_type", gachaType.code.toString())
+                        .addQueryParameter("gacha_type", gachaType.code.toString())
                         .addQueryParameter("lang", language.id)
                         .addQueryParameter("device_type", "pc")
                         .addQueryParameter("authkey", authKey.authkey)
@@ -572,8 +579,8 @@ class GenshinImpact @JvmOverloads constructor(
     fun getWishLog(
         authKey: HoyoLabAuthKey,
         gachaType: GachaType,
-        language: Language,
-        page: Long,
+        language: Language = this.language,
+        page: Long = 1,
         endId: Long = 0,
     ): GenshinWishLog =
         generateWishLogCall(authKey, gachaType, language, page, endId).execute().use {
@@ -584,8 +591,8 @@ class GenshinImpact @JvmOverloads constructor(
     fun getWishLog(
         authKey: HoyoLabAuthKey,
         gachaType: GachaType,
-        language: Language,
-        page: Long,
+        language: Language = this.language,
+        page: Long = 1,
         endId: Long = 0,
         callback: (GenshinWishLog) -> Unit,
         exceptionHandler: ((IOException) -> Unit)? = null,
