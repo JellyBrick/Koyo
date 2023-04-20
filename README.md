@@ -31,3 +31,4 @@ dependencies {
 
 - [hoyolab-api](https://github.com/vermaysha/hoyolab-api)
 - [Genshin-Impact-Wish-history-API](https://github.com/jvergerolle/Genshin-Impact-Wish-history-API)
+- [genshinstats](https://github.com/thesadru/genshinstats)

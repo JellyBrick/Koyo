@@ -34,6 +34,7 @@ import be.zvz.koyo.types.genshin.GenshinOptions
 import be.zvz.koyo.types.genshin.GenshinRegion
 import be.zvz.koyo.types.genshin.GenshinSpiralAbyss
 import be.zvz.koyo.utils.AsyncHandler
+import be.zvz.koyo.utils.ExceptionUtil
 import be.zvz.koyo.utils.RequestUtil
 import be.zvz.koyo.utils.StringUtil
 import kotlinx.datetime.Clock
@@ -71,6 +72,10 @@ class GenshinImpact @JvmOverloads constructor(
 
     val userRegion: GenshinRegion = GenshinRegion.from(StringUtil.genshinUidToRegion(options.uid.toString()))
 
+    private fun processThrowable(data: HoyoLabResponse<*>) {
+        ExceptionUtil.getException(data.retcode, data)?.let { throw it } ?: return
+    }
+
     private fun generateRecordCall() = okHttpClient.newCall(
         RequestUtil.getDefaultWebRequestBuilder(cookie)
             .url(
@@ -86,8 +91,8 @@ class GenshinImpact @JvmOverloads constructor(
     )
 
     fun record(): GenshinRecord = generateRecordCall().execute().use {
-        jsonParser.decodeFromStream<HoyoLabResponse<GenshinRecord>>(it.body.byteStream())
-    }.data
+        jsonParser.decodeFromStream<HoyoLabResponse<GenshinRecord?>>(it.body.byteStream())
+    }.apply(::processThrowable).data!!
 
     fun record(callback: (GenshinRecord) -> Unit, exceptionHandler: ((IOException) -> Unit)? = null) =
         generateRecordCall().enqueue(
@@ -110,8 +115,8 @@ class GenshinImpact @JvmOverloads constructor(
     )
 
     fun characters(): GenshinCharacters = generateCharactersCall().execute().use {
-        jsonParser.decodeFromStream<HoyoLabResponse<GenshinCharacters>>(it.body.byteStream())
-    }.data
+        jsonParser.decodeFromStream<HoyoLabResponse<GenshinCharacters?>>(it.body.byteStream())
+    }.apply(::processThrowable).data!!
 
     fun characters(callback: (GenshinCharacters) -> Unit, exceptionHandler: ((IOException) -> Unit)? = null) =
         generateCharactersCall().enqueue(
@@ -140,7 +145,7 @@ class GenshinImpact @JvmOverloads constructor(
         characterIds: List<Long>,
     ): GenshinCharacters.CharacterSummary = generateCharactersSummary(characterIds).execute().use {
         jsonParser.decodeFromStream<HoyoLabResponse<GenshinCharacters.CharacterSummary>>(it.body.byteStream())
-    }.data
+    }.apply(::processThrowable).data
 
     fun charactersSummary(
         characterIds: List<Long>,
@@ -170,8 +175,8 @@ class GenshinImpact @JvmOverloads constructor(
     fun spiralAbyss(
         scheduleType: GenshinAbyssSchedule = GenshinAbyssSchedule.CURRENT,
     ): GenshinSpiralAbyss = generateSpiralAbyssCall(scheduleType).execute().use {
-        jsonParser.decodeFromStream<HoyoLabResponse<GenshinSpiralAbyss>>(it.body.byteStream())
-    }.data
+        jsonParser.decodeFromStream<HoyoLabResponse<GenshinSpiralAbyss?>>(it.body.byteStream())
+    }.apply(::processThrowable).data!!
 
     fun spiralAbyss(
         scheduleType: GenshinAbyssSchedule = GenshinAbyssSchedule.CURRENT,
@@ -196,8 +201,8 @@ class GenshinImpact @JvmOverloads constructor(
     )
 
     fun dailyNote(): GenshinDailyNote = generateDailyNoteCall().execute().use {
-        jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyNote>>(it.body.byteStream())
-    }.data
+        jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyNote?>>(it.body.byteStream())
+    }.apply(::processThrowable).data!!
 
     fun dailyNote(
         callback: (GenshinDailyNote) -> Unit,
@@ -223,8 +228,8 @@ class GenshinImpact @JvmOverloads constructor(
     fun diaries(
         month: GenshinDiaryMonth = GenshinDiaryMonth.CURRENT,
     ): GenshinDiaryInfo = generateDiariesCall(month).execute().use {
-        jsonParser.decodeFromStream<HoyoLabResponse<GenshinDiaryInfo>>(it.body.byteStream())
-    }.data
+        jsonParser.decodeFromStream<HoyoLabResponse<GenshinDiaryInfo?>>(it.body.byteStream())
+    }.apply(::processThrowable).data!!
 
     fun diaries(
         month: GenshinDiaryMonth = GenshinDiaryMonth.CURRENT,
@@ -260,8 +265,8 @@ class GenshinImpact @JvmOverloads constructor(
                     .get()
                     .build(),
             ).execute().use {
-                jsonParser.decodeFromStream<HoyoLabResponse<GenshinDiaryDetail>>(it.body.byteStream())
-            }.data
+                jsonParser.decodeFromStream<HoyoLabResponse<GenshinDiaryDetail?>>(it.body.byteStream())
+            }.apply(::processThrowable).data!!
             detail = response
             historyList.addAll(response.list)
 
@@ -299,8 +304,8 @@ class GenshinImpact @JvmOverloads constructor(
     )
 
     fun dailyInfo(): GenshinDailyInfo = generateDailyInfo().execute().use {
-        jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyInfo>>(it.body.byteStream())
-    }.data
+        jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyInfo?>>(it.body.byteStream())
+    }.apply(::processThrowable).data!!
 
     fun dailyInfo(
         callback: (GenshinDailyInfo) -> Unit,
@@ -323,8 +328,8 @@ class GenshinImpact @JvmOverloads constructor(
     )
 
     fun dailyRewards(): GenshinDailyRewards = generateDailyRewards().execute().use {
-        jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyRewards>>(it.body.byteStream())
-    }.data
+        jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyRewards?>>(it.body.byteStream())
+    }.apply(::processThrowable).data!!
 
     fun dailyRewards(
         callback: (GenshinDailyRewards) -> Unit,
@@ -368,8 +373,8 @@ class GenshinImpact @JvmOverloads constructor(
     }
 
     fun dailyClaim(): HoyoLabResponse<GenshinDailyClaim?> = generateDailyClaim().execute().use {
-        jsonParser.decodeFromStream(it.body.byteStream())
-    }
+        jsonParser.decodeFromStream<HoyoLabResponse<GenshinDailyClaim?>>(it.body.byteStream())
+    }.apply(::processThrowable)
 
     fun dailyClaim(
         callback: (HoyoLabResponse<GenshinDailyClaim?>) -> Unit,
@@ -439,8 +444,8 @@ class GenshinImpact @JvmOverloads constructor(
     )
 
     fun redeemCode(redeemCode: String): HoyoLabResponse<CodeRedemptionResult?> = generateRedeemCodeCall(redeemCode).execute().use {
-        jsonParser.decodeFromStream(it.body.byteStream())
-    }
+        jsonParser.decodeFromStream<HoyoLabResponse<CodeRedemptionResult?>>(it.body.byteStream())
+    }.apply(::processThrowable)
 
     fun redeemCode(
         redeemCode: String,
@@ -584,8 +589,8 @@ class GenshinImpact @JvmOverloads constructor(
         endId: Long = 0,
     ): GenshinWishLog =
         generateWishLogCall(authKey, gachaType, language, page, endId).execute().use {
-            jsonParser.decodeFromStream<HoyoLabResponse<GenshinWishLog>>(it.body.byteStream()).data
-        }
+            jsonParser.decodeFromStream<HoyoLabResponse<GenshinWishLog?>>(it.body.byteStream())
+        }.apply(::processThrowable).data!!
 
     @JvmOverloads
     fun getWishLog(

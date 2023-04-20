@@ -1,6 +1,6 @@
 package be.zvz.koyo.exception
 
-class HoyoLabException : RuntimeException {
+open class HoyoLabException : RuntimeException {
     var data: Any? = null
         private set
     constructor() : super()
